@@ -51,7 +51,8 @@ class OrderController extends Controller
                 'order_id' => $order->id,
                 'transaction_id' => $order->transaction_id,
                 'total_price' => $order->total_price,
-                'status' => $order->status
+                'status' => $order->status,
+                'email' => $order->email
             ]
         ]);
     }

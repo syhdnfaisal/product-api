@@ -8,6 +8,8 @@ use App\Services\XenditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderPaidMail;
 
 class PaymentsController extends Controller
 {
@@ -41,16 +43,16 @@ class PaymentsController extends Controller
     {
         Log::info('Xendit Webhook', $request->all());
 
-        // optional: validasi token (jika dipakai)
+        // validasi token
         $token = $request->header('X-CALLBACK-TOKEN');
         if ($token && $token !== config('xendit.callback_token')) {
             return response()->json(['message' => 'Invalid token'], 403);
         }
 
-        // ambil external_id (format: order-10)
+        // ambil external_id (format: INV-10)
         $externalId = $request->external_id;
 
-        // ambil ID order (hapus "order-")
+        // ambil ID order (hapus "INV-")
         $orderId = str_replace('INV-', '', $externalId);
 
         // ambil payment berdasarkan external_id
@@ -84,6 +86,10 @@ class PaymentsController extends Controller
                 'paid_at' => $request->paid_at ? Carbon::parse($request->paid_at) : null,
             ]);
         }
+
+        // Kirim email
+        Mail::to($order->email)->queue(new OrderPaidMail($order));
+
 
         return response()->json(['message' => 'Webhook processed']);
     }
